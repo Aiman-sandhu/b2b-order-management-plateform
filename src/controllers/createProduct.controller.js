@@ -1,5 +1,6 @@
 const prisma = require("../db/prisma");
 const { productSchema, updateProductSchema } = require("../validators/product.schema");
+const logAudit = require("../utils/audit");
 
 const createProduct = async (req, res) => {
   try {
@@ -12,6 +13,7 @@ const createProduct = async (req, res) => {
     }
 
     const product = await prisma.product.create({ data: result.data });
+    await logAudit({ userId: req.user.id, action: "PRODUCT_CREATED", entity: "Product", entityId: product.id });
     return res.status(201).json(product);
   } catch (err) {
     console.error(err);
@@ -62,11 +64,13 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    const product = await prisma.product.update({
+       const product = await prisma.product.update({
       where: { id },
       data: result.data,
     });
+    await logAudit({ userId: req.user.id, action: "PRODUCT_UPDATED", entity: "Product", entityId: id, meta: result.data });
     return res.json(product);
+   
   } catch (err) {
     if (err.code === "P2025") {
       return res.status(404).json({ message: "Product not found" });
@@ -84,6 +88,7 @@ const deleteProduct = async (req, res) => {
     }
 
     await prisma.product.delete({ where: { id } });
+    await logAudit({ userId: req.user.id, action: "PRODUCT_DELETED", entity: "Product", entityId: id });
     return res.status(204).send();
   } catch (err) {
     if (err.code === "P2025") {
