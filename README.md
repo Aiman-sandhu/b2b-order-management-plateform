@@ -112,4 +112,10 @@ Order placement, status changes, and product create/update/delete actions are re
 - Login returns the same error for a wrong email and a wrong password
 - Login is rate limited (10 attempts per 15 minutes)
 - `.env` is never pushed to git
+## Known Limitations and Next Steps
 
+- No payment integration
+- No pagination or search on products yet
+- Tokens are not revocable (no refresh tokens)
+- Rate limiting is in-memory (use Redis for multiple servers)
+- Possible improvements: frontend, email invoices, automated tests, caching
