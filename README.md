@@ -89,15 +89,15 @@ Test: the cart had 2 products (first with quantity 2, second with quantity 5). T
 
 **Before** (stock of both products):
 
-![Stock before](docs/screenshots/rollback-before.png)
+![Stock before](docs\screenshots\rollback-before.png)
 
 **Order response** (`400 Insufficient stock`):
 
-![Rollback error](docs/screenshots/rollback-error.png)
+![Rollback error](docs\screenshots\rollback-error.png)
 
 **After**: the first product's stock is unchanged and no new Order was created:
 
-![Stock after](docs/screenshots/rollback-after.png)
+![Stock after](docs\screenshots\rollback-after.png)
 
 This shows that the first product's decrement had already happened, but it was reverted when the transaction failed.
 
