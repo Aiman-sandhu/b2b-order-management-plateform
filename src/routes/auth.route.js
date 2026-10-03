@@ -2,6 +2,7 @@ const express = require("express");
 const {register, login} = require("../controllers/auth.controller");
 const authenticate = require("../middleware/auth");
 const authorize = require("../middleware/role");
+const rateLimit = require("express-rate-limit"); 
 
 const router = express.Router();
 
@@ -14,14 +15,12 @@ router.get("/admin-test", authenticate, authorize("ADMIN"),(req,res)=>{
 router.post("/register", register)
 
 
-const rateLimit = require("express-rate-limit");
-
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
+  skip: () => process.env.NODE_ENV === "test",
   message: { message: "Too many attempts, try again after 15 minutes" },
 });
-
 router.post("/login", loginLimiter, login);
 
 module.exports = router;

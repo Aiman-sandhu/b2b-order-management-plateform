@@ -6,71 +6,83 @@ const placeOrder = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const order = await prisma.$transaction(async (tx) => {
-    
-      const cartItems = await tx.cartItem.findMany({
-        where: { userId },
-        include: { product: true },
-        orderBy: { productId: "asc" }, 
-      });
-
-      if (cartItems.length === 0) {
-        const err = new Error("Cart is empty");
-        err.statusCode = 400;
-        throw err;
-      }
-
-      // 2. guarded stock minus
-      for (const item of cartItems) {
-        const result = await tx.product.updateMany({
-          where: { id: item.productId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
+    const order = await prisma.$transaction(
+      async (tx) => {
+        // 1. cart
+        const cartItems = await tx.cartItem.findMany({
+          where: { userId },
+          include: { product: true },
+          orderBy: { productId: "asc" },
         });
 
-        if (result.count === 0) {
-          const err = new Error(`Insufficient stock for product ${item.productId}`);
+        if (cartItems.length === 0) {
+          const err = new Error("Cart is empty");
           err.statusCode = 400;
-          throw err; //  transaction rollback
+          throw err;
         }
-      }
 
-      // 3. total (Decimal methods )
-      let total = new Prisma.Decimal(0);
-      for (const item of cartItems) {
-        total = total.add(item.product.price.mul(item.quantity));
-      }
+        // 2. guarded stock minus
+        for (const item of cartItems) {
+          const result = await tx.product.updateMany({
+            where: { id: item.productId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (result.count === 0) {
+            const err = new Error(`Insufficient stock for product ${item.productId}`);
+            err.statusCode = 400;
+            throw err;
+          }
+        }
 
-      // 4. order + items
-      const created = await tx.order.create({
-        data: {
-          userId,
-          total,
-          items: {
-            create: cartItems.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.product.price,
-            })),
+        // 3. total
+        let total = new Prisma.Decimal(0);
+        for (const item of cartItems) {
+          total = total.add(item.product.price.mul(item.quantity));
+        }
+
+        // 4. order + items (include ke saath, alag findUnique nahi)
+        const created = await tx.order.create({
+          data: {
+            userId,
+            total,
+            items: {
+              create: cartItems.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.product.price,
+              })),
+            },
           },
-        },
-      });
+          include: { items: true },
+        });
 
-      // 5. invoice
-      await tx.invoice.create({
-        data: {
-          orderId: created.id,
-          number: `INV-${String(created.id).padStart(6, "0")}`,
-        },
-      });
+        // 5. invoice
+        const invoice = await tx.invoice.create({
+          data: {
+            orderId: created.id,
+            number: `INV-${String(created.id).padStart(6, "0")}`,
+          },
+        });
 
-      // 6. cart empty
-      await tx.cartItem.deleteMany({ where: { userId } });
-const logAudit = require("../utils/audit");
-      return tx.order.findUnique({
-        where: { id: created.id },
-        include: { items: true, invoice: true },
-      });
-    });
+        // 6. cart khali
+        await tx.cartItem.deleteMany({ where: { userId } });
+
+        // 7. audit
+        await logAudit(
+          {
+            userId,
+            action: "ORDER_PLACED",
+            entity: "Order",
+            entityId: created.id,
+            meta: { total: total.toString() },
+          },
+          tx
+        );
+
+        return { ...created, invoice };
+      },
+      { maxWait: 15000, timeout: 30000 }
+    );
 
     return res.status(201).json(order);
   } catch (err) {
@@ -173,8 +185,8 @@ const updateOrderStatus = async (req, res) => {
 
       return result;
     },{
-    maxWait: 10000, // transaction shuru hone ka intezaar (ms)
-    timeout: 15000, // transaction ke chalne ka max time (ms)
+    maxWait: 10000,
+    timeout: 40000,
   })
 
     return res.json(updated);
