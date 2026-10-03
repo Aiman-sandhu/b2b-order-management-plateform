@@ -86,21 +86,19 @@ The database processes one query at a time on a given row, so the second custome
 ## Proof of Transaction Rollback
 
 Test: the cart had 2 products (first with quantity 2, second with quantity 5). The admin set the second product's stock to `1`, then the order was placed.
-
 **Before** (stock of both products):
 
-![Stock before](docs\screenshots\rollback-before.png)
+![Stock before](docs/screenshots/rollback-before.png)
 
 **Order response** (`400 Insufficient stock`):
 
-![Rollback error](docs\screenshots\rollback-error.png)
+![Rollback error](docs/screenshots/rollback-error.png)
 
 **After**: the first product's stock is unchanged and no new Order was created:
 
-![Stock after](docs\screenshots\rollback-after.png)
+![Stock after](docs/screenshots/rollback-after.png)
 
 This shows that the first product's decrement had already happened, but it was reverted when the transaction failed.
-
 ## Audit Logs
 
 Order placement, status changes, and product create/update/delete actions are recorded in the `AuditLog` table. Order-related logs are written inside the transaction, so they are also rolled back if it fails.
