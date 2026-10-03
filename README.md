@@ -103,7 +103,15 @@ This shows that the first product's decrement had already happened, but it was r
 
 Order placement, status changes, and product create/update/delete actions are recorded in the `AuditLog` table. Order-related logs are written inside the transaction, so they are also rolled back if it fails.
 
-![Audit logs](docs/screenshots/audit-logs.png)
+## Tests
+
+Automated tests (Jest + Supertest) cover auth, roles, cart, order placement, rollback and status transitions.
+
+```bash
+npm test
+```
+
+![Tests passing](docs/screenshots/test-passed.png)
 
 ## Security Notes
 
@@ -112,10 +120,11 @@ Order placement, status changes, and product create/update/delete actions are re
 - Login returns the same error for a wrong email and a wrong password
 - Login is rate limited (10 attempts per 15 minutes)
 - `.env` is never pushed to git
+
 ## Known Limitations and Next Steps
 
 - No payment integration
 - No pagination or search on products yet
 - Tokens are not revocable (no refresh tokens)
 - Rate limiting is in-memory (use Redis for multiple servers)
-- Possible improvements: frontend, email invoices, automated tests, caching
+- Possible improvements: frontend, email invoices, caching
