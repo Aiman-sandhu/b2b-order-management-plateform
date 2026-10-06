@@ -1,5 +1,6 @@
-# b2b-order-management-plateform
-B2B order management plateform: Node.js, Express.js, PostgreSQL (Prisma), JWT role-based auth. Arrowstack Full Stack internship, Project 1.
+# B2B Order Management Platform
+
+B2B order management platform built with Node.js, Express, PostgreSQL (Prisma) and JWT role-based auth. Arrowstack Full Stack internship, Project 1.
 
 ## Features
 
@@ -13,15 +14,19 @@ B2B order management plateform: Node.js, Express.js, PostgreSQL (Prisma), JWT ro
 
 ## Tech Stack
 
-Node.js, Express, Prisma ORM, PostgreSQL (Neon), JWT, bcrypt, Zod, express-rate-limit
+Node.js, Express, Prisma ORM, PostgreSQL (Neon), JWT, bcrypt, Zod, express-rate-limit, Jest, Supertest, Docker
+
+## Demo
+
+[Watch the demo video](https://drive.google.com/file/d/17pRg7MUWiqOlJYlLPeFwltM7koBMflfQ/view?usp=sharing)
 
 ## Setup
 
 ```bash
-git clone <repo-url>
-cd proj-01
+git clone https://github.com/Aiman-sandhu/b2b-order-management-plateform.git
+cd b2b-order-management-plateform
 npm install
-cp  .env    
+cp .env.example .env     # then fill in your own values
 npx prisma migrate dev
 npm run dev
 ```
@@ -34,7 +39,19 @@ The server runs at `http://localhost:5000`.
 DATABASE_URL=
 JWT_SECRET=
 PORT=5000
+TEST_ADMIN_EMAIL=
+TEST_ADMIN_PASSWORD=
 ```
+
+`TEST_ADMIN_EMAIL` and `TEST_ADMIN_PASSWORD` are only needed to run the tests (an existing admin account).
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+The API runs at `http://localhost:5000`. Set `DATABASE_URL` and `JWT_SECRET` in `.env` first.
 
 ## API Endpoints
 
@@ -86,6 +103,7 @@ The database processes one query at a time on a given row, so the second custome
 ## Proof of Transaction Rollback
 
 Test: the cart had 2 products (first with quantity 2, second with quantity 5). The admin set the second product's stock to `1`, then the order was placed.
+
 **Before** (stock of both products):
 
 ![Stock before](docs/screenshots/rollback-before.png)
@@ -99,9 +117,12 @@ Test: the cart had 2 products (first with quantity 2, second with quantity 5). T
 ![Stock after](docs/screenshots/rollback-after.png)
 
 This shows that the first product's decrement had already happened, but it was reverted when the transaction failed.
+
 ## Audit Logs
-![Audit logs](docs/screenshots/audit-logs.png)
+
 Order placement, status changes, and product create/update/delete actions are recorded in the `AuditLog` table. Order-related logs are written inside the transaction, so they are also rolled back if it fails.
+
+![Audit logs](docs/screenshots/audit-logs.png)
 
 ## Tests
 
@@ -112,6 +133,11 @@ npm test
 ```
 
 ![Tests passing](docs/screenshots/test-passed.png)
+
+## Documentation
+
+- [Requirements and acceptance criteria](docs/requirements.md)
+- [Decision log](docs/decisions.md)
 
 ## Security Notes
 
