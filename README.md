@@ -100,7 +100,7 @@ Test: the cart had 2 products (first with quantity 2, second with quantity 5). T
 
 This shows that the first product's decrement had already happened, but it was reverted when the transaction failed.
 ## Audit Logs
-
+![Audit logs](docs/screenshots/audit-logs.png)
 Order placement, status changes, and product create/update/delete actions are recorded in the `AuditLog` table. Order-related logs are written inside the transaction, so they are also rolled back if it fails.
 
 ## Tests
